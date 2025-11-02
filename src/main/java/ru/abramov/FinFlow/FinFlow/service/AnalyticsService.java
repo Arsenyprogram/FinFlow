@@ -34,7 +34,7 @@ public class AnalyticsService {
     private final ModelMapper modelMapper;
 
     @Autowired
-    public AnalyticsService( TransactionRepository transactionRepository, TransactionService transactionService, CategoryRepository categoryRepository, AuthPersonService authPersonService, ModelMapper modelMapper) {
+    public AnalyticsService( TransactionRepository transactionRepository,  CategoryRepository categoryRepository, AuthPersonService authPersonService, ModelMapper modelMapper) {
 
         this.transactionRepository = transactionRepository;
         this.categoryRepository = categoryRepository;
@@ -86,7 +86,6 @@ public class AnalyticsService {
 
             points.add(dto);
         }
-
         BalanceHistoryResponse resp = new BalanceHistoryResponse();
         resp.setStartingBalance(startingBalance);
         resp.setPoints(points);
@@ -148,35 +147,33 @@ public class AnalyticsService {
 
     private record PeriodRange(LocalDate start, LocalDate end) {}
 
-
     public IncomeVsExpensesDTO getIncomeVsExpenses(int year) {
-        List<Object[]> incomes = transactionRepository.getMonthlyIncome(year, authPersonService.getCurrentPerson().getId());
-        List<Object[]> expenses = transactionRepository.getMonthlyExpenses(year, authPersonService.getCurrentPerson().getId());
+        int id = authPersonService.getCurrentPerson().getId();
 
+        List<MonthlySumProjection> incomes = transactionRepository.getMonthlyIncome(year, id);
+        List<MonthlySumProjection> expenses = transactionRepository.getMonthlyExpenses(year, id);
 
-        Map<String, Double> incomeMap = new HashMap<>();
-        for (Object[] row : incomes) {
-            incomeMap.put((String) row[0], ((Number) row[1]).doubleValue());
-        }
+        Map<String, Double> incomeMap = incomes.stream()
+                .collect(Collectors.toMap(MonthlySumProjection::getMonth, MonthlySumProjection::getSum));
 
-        Map<String, Double> expenseMap = new HashMap<>();
-        for (Object[] row : expenses) {
-            expenseMap.put((String) row[0], ((Number) row[1]).doubleValue());
-        }
+        Map<String, Double> expenseMap = expenses.stream()
+                .collect(Collectors.toMap(MonthlySumProjection::getMonth, MonthlySumProjection::getSum));
 
         Set<String> allMonths = new TreeSet<>();
         allMonths.addAll(incomeMap.keySet());
         allMonths.addAll(expenseMap.keySet());
 
-        List<IncomeVsExpensesDTO.MonthlyData> monthlyDataList = new ArrayList<>();
-        for (String month : allMonths) {
-            double income = incomeMap.getOrDefault(month, 0.0);
-            double expense = expenseMap.getOrDefault(month, 0.0);
-            monthlyDataList.add(new IncomeVsExpensesDTO.MonthlyData(month, income, expense));
-        }
+        List<IncomeVsExpensesDTO.MonthlyData> monthlyDataList = allMonths.stream()
+                .map(month -> new IncomeVsExpensesDTO.MonthlyData(
+                        month,
+                        incomeMap.getOrDefault(month, 0.0),
+                        expenseMap.getOrDefault(month, 0.0)
+                ))
+                .toList();
 
         return new IncomeVsExpensesDTO(year, monthlyDataList);
     }
+
 
     public MonthStaticDTO getMonthStatic(String YearMonths) {
         YearMonth ym = YearMonth.parse(YearMonths);
@@ -201,11 +198,10 @@ public class AnalyticsService {
                 .map(transaction -> modelMapper.map(transaction, TransactionSavedDTO.class))
                 .orElse(null);
         MonthStaticDTO dto = new MonthStaticDTO(String.format("%02d", ym.getMonthValue()), IncomeMonth, ExpensesMonth, mostExpensiveCategory, largestTx);
-        dto.setMostExpensiveCategory(categoryRepository.findById(largestTx.getCategoryId()).get().getName());
+        dto.setMostExpensiveCategory(categoryRepository.findById( largestTx.getCategoryId()).get().getName());
 
         return dto;
 
     }
-
 
 }

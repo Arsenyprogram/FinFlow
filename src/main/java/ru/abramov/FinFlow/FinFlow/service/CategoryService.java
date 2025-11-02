@@ -19,6 +19,7 @@ public class CategoryService {
         this.categoryRepository = categoryRepository;
     }
 
+//    @logger
     public Optional<Category> findById(Long id) {
         return categoryRepository.findById(id);
     }

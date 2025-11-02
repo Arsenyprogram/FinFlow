@@ -1,5 +1,6 @@
 package ru.abramov.FinFlow.FinFlow.controllers;
 
+import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -16,6 +17,7 @@ import ru.abramov.FinFlow.FinFlow.service.PersonService;
 
 @RestController
 @RequestMapping("/users")
+@RequiredArgsConstructor
 public class PersonController {
 
     private final PersonService personService;
@@ -23,30 +25,23 @@ public class PersonController {
     private final AuthPersonService authPersonService;
     private final PasswordEncoder passwordEncoder;
 
-    @Autowired
-    public PersonController(PersonService personService, ModelMapper modelMapper, AuthPersonService authPersonService, PasswordEncoder passwordEncoder) {
-        this.personService = personService;
-        this.modelMapper = modelMapper;
-        this.authPersonService = authPersonService;
-        this.passwordEncoder = passwordEncoder;
-    }
-
     @GetMapping("/me")
-    public ResponseEntity<?> infoAboutPerson(){
+    public ResponseEntity<PersonInfoDTO> infoAboutPerson(){
         Person person = authPersonService.getCurrentPerson();
         PersonInfoDTO personInfoDTO = modelMapper.map(person, PersonInfoDTO.class);
-        return  new ResponseEntity<>(personInfoDTO, HttpStatus.OK);
+        return ResponseEntity.ok(personInfoDTO);
     }
 
-    @PutMapping("/me")
-    public ResponseEntity<?> updatePerson(@RequestBody PersonUpdateDTO dto){
+    @PatchMapping("/me")
+    public ResponseEntity<PersonInfoDTO> updatePerson(@RequestBody PersonUpdateDTO dto){
         Person person = authPersonService.getCurrentPerson();
         if (dto.getFirstName() != null) person.setFirstName(dto.getFirstName());
         if (dto.getLastName() != null) person.setLastName(dto.getLastName());
         if (dto.getPhoneNumber() != null) person.setPhoneNumber(dto.getPhoneNumber());
         if (dto.getDefaultCurrency() != null) person.setDefaultCurrency(dto.getDefaultCurrency());
         personService.update(person);
-        return new ResponseEntity<>(HttpStatus.OK);
+        PersonInfoDTO personInfoDTO = modelMapper.map(person, PersonInfoDTO.class);
+        return ResponseEntity.ok(personInfoDTO);
     }
 
 
@@ -62,8 +57,5 @@ public class PersonController {
         personService.softDelete(person);
         return new ResponseEntity<>(HttpStatus.OK);
     }
-
-
-
 
 }

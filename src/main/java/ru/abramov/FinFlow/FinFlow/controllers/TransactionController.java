@@ -1,6 +1,7 @@
 package ru.abramov.FinFlow.FinFlow.controllers;
 
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -26,6 +27,7 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/transactions")
+@RequiredArgsConstructor
 public class TransactionController {
 
     private final TransactionService transactionService;
@@ -33,13 +35,6 @@ public class TransactionController {
     private final AuthPersonService authPersonService;
     private final CategoryService categoryService;
 
-    @Autowired
-    public TransactionController(TransactionService transactionService, ModelMapper modelMapper, AuthPersonService authPersonService, CategoryService categoryService) {
-        this.transactionService = transactionService;
-        this.modelMapper = modelMapper;
-        this.authPersonService = authPersonService;
-        this.categoryService = categoryService;
-    }
 
     @GetMapping
     public ResponseEntity<List<TransactionDTO>> getAllTransactions() {
@@ -77,7 +72,7 @@ public class TransactionController {
         transaction.setCreatedAt(Timestamp.from(Instant.now()));
         person.getTransactions().add(transaction);
         transactionService.saveTransaction(transaction);
-        return ResponseEntity.ok(HttpStatus.CREATED);
+        return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
     @PutMapping("/{id}")
@@ -107,6 +102,5 @@ public class TransactionController {
         transactionService.deleteTransaction(transaction);
         return ResponseEntity.ok(HttpStatus.OK);
     }
-
 
 }

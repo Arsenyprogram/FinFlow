@@ -2,7 +2,10 @@ package ru.abramov.FinFlow.FinFlow.entity;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.sql.Timestamp;
 import java.time.LocalDate;
@@ -11,6 +14,9 @@ import java.time.LocalDate;
 @Entity
 @Table(name = "transactions")
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class Transaction {
     @Id
     @Column(name = "id")
@@ -45,14 +51,6 @@ public class Transaction {
     private Category category;
 
 
-    public Transaction() {
-    }
 
-    public Transaction(Double amount, String type, Person user, Category category) {
-        this.amount = amount;
-        this.type = type;
-        this.user = user;
-        this.category = category;
-    }
 
 }

@@ -1,6 +1,7 @@
 package ru.abramov.FinFlow.FinFlow.controllers;
 
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -22,17 +23,13 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/categories")
+@RequiredArgsConstructor
 public class CategoryController {
 
     private final CategoryService categoryService;
     private final ModelMapper modelMapper;
     private final AuthPersonService authPersonService;
 
-    public CategoryController(CategoryService categoryService, ModelMapper modelMapper, AuthPersonService authPersonService) {
-        this.categoryService = categoryService;
-        this.modelMapper = modelMapper;
-        this.authPersonService = authPersonService;
-    }
 
     @GetMapping()
     public ResponseEntity<List<CategoryDTO>> findAll() {
@@ -61,7 +58,7 @@ public class CategoryController {
         person.getCategories().add(category);
         category.setCreated_at(Timestamp.valueOf(LocalDateTime.now()));
         categoryService.save(category);
-        return ResponseEntity.ok(HttpStatus.CREATED);
+        return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
     @PutMapping("/{id}")

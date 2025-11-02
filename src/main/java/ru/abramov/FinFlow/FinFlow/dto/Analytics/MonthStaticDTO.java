@@ -1,12 +1,14 @@
 package ru.abramov.FinFlow.FinFlow.dto.Analytics;
 
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import ru.abramov.FinFlow.FinFlow.dto.Transactional.TransactionSavedDTO;
 
 import java.math.BigDecimal;
 
 
 @Data
+@NoArgsConstructor
 public class MonthStaticDTO {
 
     private String month;

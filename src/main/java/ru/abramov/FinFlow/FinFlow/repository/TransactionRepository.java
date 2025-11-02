@@ -8,6 +8,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import ru.abramov.FinFlow.FinFlow.dto.Analytics.DateSumProjection;
 import ru.abramov.FinFlow.FinFlow.dto.Analytics.ExpenseByCategoryDTO;
+import ru.abramov.FinFlow.FinFlow.dto.Analytics.MonthlySumProjection;
 import ru.abramov.FinFlow.FinFlow.entity.Transaction;
 
 import java.math.BigDecimal;
@@ -65,24 +66,27 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
     );
 
 
-    @Query(value = "SELECT TO_CHAR(date, 'YYYY-MM') as month, SUM(amount) " +
-            "FROM transactions " +
-            "WHERE type = 'INCOME' AND EXTRACT(YEAR FROM date) = :year " +
-            "AND user_id = :userId " +
-            "GROUP BY month " +
-            "ORDER BY month",
-            nativeQuery = true)
-    List<Object[]> getMonthlyIncome(@Param("year") int year, @Param("userId") int userId);
+    @Query(value = """
+    SELECT TO_CHAR(date, 'YYYY-MM') AS month_name,
+           SUM(amount) AS sum
+    FROM transactions
+    WHERE type = 'INCOME'
+      AND EXTRACT(YEAR FROM date) = :year
+      AND user_id = :userId
+    GROUP BY month_name
+    ORDER BY month_name
+    """, nativeQuery = true)
+    List<MonthlySumProjection> getMonthlyIncome(@Param("year") int year, @Param("userId") int userId);
 
 
-    @Query(value = "SELECT TO_CHAR(date, 'YYYY-MM') as month, SUM(amount) " +
+    @Query(value = "SELECT TO_CHAR(date, 'YYYY-MM') as month_name, SUM(amount) as sum " +
             "FROM transactions " +
             "WHERE type = 'EXPENSE' AND EXTRACT(YEAR FROM date) = :year " +
             "AND user_id = :userId " +
-            "GROUP BY month " +
-            "ORDER BY month",
+            "GROUP BY month_name " +
+            "ORDER BY month_name",
             nativeQuery = true)
-    List<Object[]> getMonthlyExpenses(@Param("year") int year, @Param("userId") int userId);
+    List<MonthlySumProjection> getMonthlyExpenses(@Param("year") int year, @Param("userId") int userId);
 
 
 
@@ -135,17 +139,6 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
                                                    @Param("categoryId") Integer categoryId,
                                                    @Param("startDate") LocalDate startDate,
                                                    @Param("endDate") LocalDate endDate);
-
-
-
-
-
-
-
-
-
-
-
 
 
 }

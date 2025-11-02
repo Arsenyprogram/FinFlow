@@ -68,8 +68,8 @@ public class JWTFilter extends OncePerRequestFilter {
 
     private void sendJsonError(HttpServletResponse response, int status, String message) throws IOException {
         response.setStatus(status);
-        response.setContentType("application/json;charset=UTF-8"); // <- важно!
-        response.setCharacterEncoding("UTF-8");                   // <- обязательно!
+        response.setContentType("application/json;charset=UTF-8");
+        response.setCharacterEncoding("UTF-8");
         response.getWriter().write("{\"error\": \"" + message + "\"}");
     }
 

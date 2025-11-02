@@ -1,10 +1,9 @@
 package ru.abramov.FinFlow.FinFlow.dto.Budget;
 
-import jakarta.persistence.*;
+
 import lombok.Data;
-import ru.abramov.FinFlow.FinFlow.entity.Budget;
-import ru.abramov.FinFlow.FinFlow.entity.Category;
-import ru.abramov.FinFlow.FinFlow.entity.Person;
+import lombok.NoArgsConstructor;
+
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -19,7 +18,6 @@ public class BudgetDTO {
     private String category;
 
     private BigDecimal amount;
-
 
     private LocalDate startDate;
 

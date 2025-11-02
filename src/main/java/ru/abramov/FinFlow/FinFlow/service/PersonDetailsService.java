@@ -14,6 +14,7 @@ import java.util.Optional;
 @Service
 @Transactional
 public class PersonDetailsService implements UserDetailsService {
+
     private final PersonRepository userRepository;
 
     public PersonDetailsService(PersonRepository userRepository) {

@@ -1,9 +1,10 @@
 package ru.abramov.FinFlow.FinFlow.dto.Analytics;
 
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
-
+@NoArgsConstructor
 @Data
 public class ExpenseByCategoryDTO {
     private String category;

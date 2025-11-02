@@ -2,7 +2,10 @@ package ru.abramov.FinFlow.FinFlow.entity;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.sql.Timestamp;
 
@@ -10,11 +13,14 @@ import java.sql.Timestamp;
 @Entity
 @Table(name = "categories")
 @Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class Category {
     @Id
     @Column(name = "id")
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer id;
+    private int id;
 
     @Column(name = "name")
     @NotNull
@@ -37,17 +43,6 @@ public class Category {
     @JoinColumn(name="user_id", referencedColumnName = "id")
     private Person user;
 
-    public Category() {
-    }
-
-    public Category(String name, String description, String type, Timestamp created_at, Timestamp updated_at, Person user) {
-        this.name = name;
-        this.description = description;
-        this.type = type;
-        this.created_at = created_at;
-        this.updated_at = updated_at;
-        this.user = user;
-    }
 
 
 }
