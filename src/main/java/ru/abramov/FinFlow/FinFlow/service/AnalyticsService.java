@@ -3,6 +3,7 @@ package ru.abramov.FinFlow.FinFlow.service;
 import lombok.Data;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -39,10 +40,10 @@ public class AnalyticsService {
         this.transactionRepository = transactionRepository;
         this.categoryRepository = categoryRepository;
         this.authPersonService = authPersonService;
-
         this.modelMapper = modelMapper;
     }
 
+    @Cacheable(value = "currentBalance", key = "#person.id", unless = "#result == null")
     public double getCurrentBalance(Person person) {
         Double transactionExpense = transactionRepository.findAllByUserId(person.getId()).stream()
                 .filter(transaction -> transaction.getType().equals("EXPENSE"))
@@ -55,7 +56,7 @@ public class AnalyticsService {
         return transactionIncome - transactionExpense;
     }
 
-
+    @Cacheable(value = "balanceBetweenStartAndEnd", key = "#userId  +'-' + #start + '-' + #end", unless = "#result == null")
     public BalanceHistoryResponse getBalanceHistory(int userId, PeriodUnit periodUnit, LocalDate start, LocalDate end){
         if(end.isBefore(start)){
             throw new IllegalArgumentException("end must be >= start");
@@ -95,6 +96,7 @@ public class AnalyticsService {
 
     }
 
+    @Cacheable(value="expenseByCategory", key = "#userId + '-' + #month", unless = "#result == null")
     public List<ExpenseByCategoryDTO> getExpenseByCategory(int userId, YearMonth month){
         LocalDate start = month.atDay(1);
         LocalDate end = month.atEndOfMonth();
@@ -147,6 +149,7 @@ public class AnalyticsService {
 
     private record PeriodRange(LocalDate start, LocalDate end) {}
 
+    @Cacheable(value = "incomeVsExpense", key = "#year + '-' + @authPersonService().currentPerson().getId()", unless="#result == null")
     public IncomeVsExpensesDTO getIncomeVsExpenses(int year) {
         int id = authPersonService.getCurrentPerson().getId();
 
@@ -174,13 +177,21 @@ public class AnalyticsService {
         return new IncomeVsExpensesDTO(year, monthlyDataList);
     }
 
-
+    @Cacheable(value = "monthStatic", key = "#YearMonths + '-' + @authPersonService.getCurrentPerson().getId()")
     public MonthStaticDTO getMonthStatic(String YearMonths) {
         YearMonth ym = YearMonth.parse(YearMonths);
+
         BigDecimal IncomeMonth = transactionRepository.getMonthlyIncome(
-                String.valueOf(ym.getYear()), String.format("%02d", ym.getMonthValue()), authPersonService.getCurrentPerson().getId());
+                String.valueOf(ym.getYear()),
+                String.format("%02d", ym.getMonthValue()),
+                authPersonService.getCurrentPerson().getId()
+        );
         BigDecimal ExpensesMonth = transactionRepository.getMonthlyExpenses(
-                String.valueOf(ym.getYear()), String.format("%02d", ym.getMonthValue()), authPersonService.getCurrentPerson().getId());
+                String.valueOf(ym.getYear()),
+                String.format("%02d", ym.getMonthValue()),
+                authPersonService.getCurrentPerson().getId()
+        );
+
         if (IncomeMonth == null) IncomeMonth = BigDecimal.ZERO;
         if (ExpensesMonth == null) ExpensesMonth = BigDecimal.ZERO;
 
@@ -190,18 +201,35 @@ public class AnalyticsService {
                 .findFirst()
                 .orElse(null);
 
-
         TransactionSavedDTO largestTx = transactionRepository
-                .findLargestTransaction(YearMonths, authPersonService.getCurrentPerson().getId(), PageRequest.of(0, 1))
+                .findLargestTransaction(
+                        YearMonths,
+                        authPersonService.getCurrentPerson().getId(),
+                        PageRequest.of(0, 1)
+                )
                 .stream()
                 .findFirst()
-                .map(transaction -> modelMapper.map(transaction, TransactionSavedDTO.class))
+                .map(tx -> modelMapper.map(tx, TransactionSavedDTO.class))
                 .orElse(null);
-        MonthStaticDTO dto = new MonthStaticDTO(String.format("%02d", ym.getMonthValue()), IncomeMonth, ExpensesMonth, mostExpensiveCategory, largestTx);
-        dto.setMostExpensiveCategory(categoryRepository.findById( largestTx.getCategoryId()).get().getName());
+
+        MonthStaticDTO dto = new MonthStaticDTO(
+                String.format("%02d", ym.getMonthValue()),
+                IncomeMonth,
+                ExpensesMonth,
+                mostExpensiveCategory,
+                largestTx
+        );
+
+        if (largestTx != null && largestTx.getCategoryId() != null) {
+            dto.setMostExpensiveCategory(
+                    categoryRepository.findById(largestTx.getCategoryId())
+                            .map(category -> category.getName())
+                            .orElse(null)
+            );
+        }
 
         return dto;
-
     }
+
 
 }

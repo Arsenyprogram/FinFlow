@@ -1,5 +1,9 @@
 package ru.abramov.FinFlow.FinFlow.controllers;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
@@ -24,7 +28,11 @@ import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
-
+@Tag(
+        name = "Transactions",
+        description = "Эндпоинты для управления транзакциями пользователя"
+)
+@SecurityRequirement(name = "bearerAuth")
 @RestController
 @RequestMapping("/transactions")
 @RequiredArgsConstructor
@@ -36,6 +44,14 @@ public class TransactionController {
     private final CategoryService categoryService;
 
 
+    @Operation(
+            summary = "Получить все транзакции пользователя",
+            description = "Возвращает список всех транзакций авторизованного пользователя",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Список транзакций успешно получен"),
+                    @ApiResponse(responseCode = "401", description = "Пользователь не авторизован")
+            }
+    )
     @GetMapping
     public ResponseEntity<List<TransactionDTO>> getAllTransactions() {
         Person person = authPersonService.getCurrentPerson();
@@ -45,6 +61,16 @@ public class TransactionController {
         return ResponseEntity.ok(transactionDTOList);
     }
 
+
+    @Operation(
+            summary = "Получить транзакцию по ID",
+            description = "Возвращает транзакцию пользователя по её ID",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Транзакция успешно получена"),
+                    @ApiResponse(responseCode = "401", description = "Пользователь не авторизован"),
+                    @ApiResponse(responseCode = "404", description = "Транзакция с указанным ID не найдена")
+            }
+    )
     @GetMapping("/{id}")
     public ResponseEntity<TransactionDTO> getTransactionById(@PathVariable Long id) {
         Transaction transaction = transactionService.findById(id)
@@ -52,6 +78,16 @@ public class TransactionController {
         return ResponseEntity.ok(modelMapper.map(transaction, TransactionDTO.class));
     }
 
+
+    @Operation(
+            summary = "Создать транзакцию",
+            description = "Создает новую транзакцию для авторизованного пользователя",
+            responses = {
+                    @ApiResponse(responseCode = "201", description = "Транзакция успешно создана"),
+                    @ApiResponse(responseCode = "400", description = "Ошибка валидации или категория не найдена"),
+                    @ApiResponse(responseCode = "401", description = "Пользователь не авторизован")
+            }
+    )
     @PostMapping
     public ResponseEntity<?> createTransaction(@RequestBody @Valid TransactionSavedDTO transactionSavedDTO, BindingResult bindingResult) {
         if(bindingResult.hasErrors()) {
@@ -75,6 +111,17 @@ public class TransactionController {
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
+
+    @Operation(
+            summary = "Обновить транзакцию",
+            description = "Обновляет данные существующей транзакции пользователя",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Транзакция успешно обновлена"),
+                    @ApiResponse(responseCode = "400", description = "Ошибка валидации или категория не найдена"),
+                    @ApiResponse(responseCode = "401", description = "Пользователь не авторизован"),
+                    @ApiResponse(responseCode = "404", description = "Транзакция с указанным ID не найдена")
+            }
+    )
     @PutMapping("/{id}")
     public ResponseEntity<?> updateTransaction(@PathVariable Long id, @RequestBody @Valid TransactionUpdate transactionUpdate, BindingResult bindingResult) {
         if (bindingResult.hasErrors()) {
@@ -96,6 +143,16 @@ public class TransactionController {
         return ResponseEntity.ok(HttpStatus.OK);
     }
 
+
+    @Operation(
+            summary = "Удалить транзакцию",
+            description = "Удаляет транзакцию пользователя по ID",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Транзакция успешно удалена"),
+                    @ApiResponse(responseCode = "401", description = "Пользователь не авторизован"),
+                    @ApiResponse(responseCode = "404", description = "Транзакция с указанным ID не найдена")
+            }
+    )
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteTransaction(@PathVariable Long id) {
         Transaction transaction = transactionService.findById(id).orElseThrow(() -> new NoSuchElementException("Транзакция с id=" + id + " не найдена"));

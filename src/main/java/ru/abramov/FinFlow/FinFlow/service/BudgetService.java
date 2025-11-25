@@ -1,7 +1,12 @@
 package ru.abramov.FinFlow.FinFlow.service;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import org.modelmapper.ModelMapper;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,7 +26,7 @@ import java.util.List;
 
 @Service
 @Transactional(readOnly = true)
-@Data
+@AllArgsConstructor
 public class BudgetService {
 
     private final BudgetRepositories budgetRepositories;
@@ -31,6 +36,7 @@ public class BudgetService {
     private final CategoryRepository categoryRepository;
 
 
+    @Cacheable(value = "listBudgets", key = "#personId", unless = "#result == null")
     public List<BudgetDTO> getListBudgets(Integer personId) {
         List<Budget> budgets = budgetRepositories.findAllByPersonId(personId);
 
@@ -39,6 +45,7 @@ public class BudgetService {
         ).toList();
     }
 
+    @Cacheable(value = "budget", key = "#id + '-' + #personId", unless = "#result == null")
     public BudgetDTO  getBudgetById(Long id, Integer personId) {
         Budget budget = budgetRepositories.findByPersonIdAndId(personId, id).orElseThrow(() -> new IllegalArgumentException("Неправильный id бюджета"));
         return getBudgetDTO(budget, personId);
@@ -84,6 +91,8 @@ public class BudgetService {
     }
 
     @Transactional
+    @CachePut(value = "budget", key = "#result.id + '-' + @authPersonService.getCurrentPerson().id")
+    @CacheEvict(value = "listBudgets", key = "@authPersonService.getCurrentPerson().id")
     public BudgetDTO save(BudgetSaveDTO budgetSaveDTO) {
         try {
             Budget budget = new Budget();
@@ -106,6 +115,8 @@ public class BudgetService {
     }
 
     @Transactional
+    @CachePut(value = "budget", key = "#id + '-' + @authPersonService.getCurrentPerson().id")
+    @CacheEvict(value = "listBudgets", key = "@authPersonService.getCurrentPerson().id")
     public BudgetDTO update(Long id, BudgetUpdateDTO budgetUpdateDTO) {
         Budget budget = budgetRepositories.findById(id).orElseThrow(() -> new IllegalArgumentException("Такого id нет"));
         budget.setAmount(budgetUpdateDTO.getAmount());
@@ -115,9 +126,14 @@ public class BudgetService {
     }
 
     @Transactional
+    @Caching(
+            evict = {
+                    @CacheEvict(value = "budget", key = "#id + '-' + @authPersonService.getCurrentPerson().id"),
+                    @CacheEvict(value = "listBudgets", key = "@authPersonService.getCurrentPerson().id")
+            }
+    )
     public void delete(Long id) {
         budgetRepositories.deleteById(id);
     }
-
 
 }

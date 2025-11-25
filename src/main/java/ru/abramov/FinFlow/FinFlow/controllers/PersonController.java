@@ -1,5 +1,9 @@
 package ru.abramov.FinFlow.FinFlow.controllers;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,7 +18,10 @@ import ru.abramov.FinFlow.FinFlow.dto.Person.PersonUpdateDTO;
 import ru.abramov.FinFlow.FinFlow.entity.Person;
 import ru.abramov.FinFlow.FinFlow.service.AuthPersonService;
 import ru.abramov.FinFlow.FinFlow.service.PersonService;
-
+@Tag(
+        name = "Users",
+        description = "Эндпоинты для работы с профилем пользователя"
+)
 @RestController
 @RequestMapping("/users")
 @RequiredArgsConstructor
@@ -25,6 +32,14 @@ public class PersonController {
     private final AuthPersonService authPersonService;
     private final PasswordEncoder passwordEncoder;
 
+    @Operation(
+            summary = "Получить информацию о текущем пользователе",
+            description = "Возвращает профиль авторизованного пользователя",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Информация успешно получена"),
+                    @ApiResponse(responseCode = "401", description = "Пользователь не авторизован")
+            }
+    )
     @GetMapping("/me")
     public ResponseEntity<PersonInfoDTO> infoAboutPerson(){
         Person person = authPersonService.getCurrentPerson();
@@ -32,6 +47,16 @@ public class PersonController {
         return ResponseEntity.ok(personInfoDTO);
     }
 
+
+    @Operation(
+            summary = "Обновить профиль текущего пользователя",
+            description = "Позволяет изменить имя, фамилию, телефон или валюту",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Профиль успешно обновлён"),
+                    @ApiResponse(responseCode = "400", description = "Некорректные данные"),
+                    @ApiResponse(responseCode = "401", description = "Пользователь не авторизован")
+            }
+    )
     @PatchMapping("/me")
     public ResponseEntity<PersonInfoDTO> updatePerson(@RequestBody PersonUpdateDTO dto){
         Person person = authPersonService.getCurrentPerson();
@@ -45,6 +70,15 @@ public class PersonController {
     }
 
 
+    @Operation(
+            summary = "Удалить аккаунт текущего пользователя",
+            description = "Пользователь должен ввести правильный пароль. Удаление мягкое (soft delete).",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Аккаунт успешно удалён"),
+                    @ApiResponse(responseCode = "400", description = "Неверный пароль"),
+                    @ApiResponse(responseCode = "401", description = "Пользователь не авторизован")
+            }
+    )
     @DeleteMapping("/me")
     public ResponseEntity<?> deletePerson(@RequestBody DeletePersonDTO dto){
         modelMapper.typeMap(DeletePersonDTO.class, Person.class)

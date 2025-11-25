@@ -46,3 +46,4 @@ Thumbs.db
 
 src/main/resources/application.properties
 *.properties
+/logs/

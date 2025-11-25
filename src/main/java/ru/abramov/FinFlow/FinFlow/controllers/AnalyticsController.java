@@ -1,5 +1,9 @@
 package ru.abramov.FinFlow.FinFlow.controllers;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
@@ -16,7 +20,11 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.util.List;
-
+@Tag(
+        name = "Analytics",
+        description = "Эндпоинты для получения финансовой аналитики пользователя"
+)
+@SecurityRequirement(name = "bearerAuth")
 @RestController
 @RequestMapping("analytics")
 public class AnalyticsController {
@@ -30,6 +38,14 @@ public class AnalyticsController {
         this.authPersonService = authPersonService;
     }
 
+    @Operation(
+            summary = "Текущий баланс пользователя",
+            description = "Возвращает текущий баланс авторизованного пользователя",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Баланс успешно получен"),
+                    @ApiResponse(responseCode = "401", description = "Пользователь не авторизован")
+            }
+    )
     @GetMapping("balance/current")
     public ResponseEntity<BigDecimal> getCurrentBalance() {
         Person person = authPersonService.getCurrentPerson();
@@ -38,6 +54,15 @@ public class AnalyticsController {
     }
 
 
+    @Operation(
+            summary = "История баланса",
+            description = "Возвращает историю баланса пользователя за указанный период",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "История баланса успешно получена"),
+                    @ApiResponse(responseCode = "400", description = "Некорректные параметры запроса"),
+                    @ApiResponse(responseCode = "401", description = "Пользователь не авторизован")
+            }
+    )
     @GetMapping("/balance/history")
     public ResponseEntity<?> getBalanceHistory(
             @RequestParam(defaultValue = "month") String period,
@@ -60,6 +85,15 @@ public class AnalyticsController {
         return ResponseEntity.ok(resp);
     }
 
+    @Operation(
+            summary = "Расходы по категориям",
+            description = "Возвращает расходы пользователя по категориям за указанный месяц",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Данные успешно получены"),
+                    @ApiResponse(responseCode = "400", description = "Некорректный месяц"),
+                    @ApiResponse(responseCode = "401", description = "Пользователь не авторизован")
+            }
+    )
     @GetMapping("expenses/by-category")
     public ResponseEntity<?> getExpensesByCategory(
             @RequestParam("month") String monthStr){
@@ -69,11 +103,29 @@ public class AnalyticsController {
         return ResponseEntity.ok(result);
     }
 
+
+    @Operation(
+            summary = "Доходы vs Расходы",
+            description = "Возвращает сравнительную статистику доходов и расходов за указанный год",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Данные успешно получены"),
+                    @ApiResponse(responseCode = "401", description = "Пользователь не авторизован")
+            }
+    )
     @GetMapping("/income-vs-expenses")
     public ResponseEntity<IncomeVsExpensesDTO> getIncomeVsExpenses(@RequestParam int year) {
         return ResponseEntity.ok(analyticsService.getIncomeVsExpenses(year));
     }
 
+    @Operation(
+            summary = "Ежемесячная сводка",
+            description = "Возвращает сводку доходов и расходов за указанный месяц",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Сводка успешно получена"),
+                    @ApiResponse(responseCode = "401", description = "Пользователь не авторизован"),
+                    @ApiResponse(responseCode = "400", description = "Некорректный месяц")
+            }
+    )
     @GetMapping("/monthly-summary")
     public ResponseEntity<MonthStaticDTO> getMonthlySummary(@RequestParam("month") String monthStr) {
         return ResponseEntity.ok(analyticsService.getMonthStatic(monthStr));

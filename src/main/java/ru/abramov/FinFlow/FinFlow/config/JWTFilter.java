@@ -11,7 +11,6 @@ import org.springframework.security.core.userdetails.UserDetails;
 
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
-import ru.abramov.FinFlow.FinFlow.exception.ExpiredTokenException;
 import ru.abramov.FinFlow.FinFlow.security.JWTUtil;
 
 import ru.abramov.FinFlow.FinFlow.service.PersonDetailsService;
@@ -33,7 +32,11 @@ public class JWTFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
         String path = request.getServletPath();
 
-        if (path.startsWith("/auth")) {
+        if (path.startsWith("/auth/") ||
+                path.startsWith("/v3/api-docs") ||
+                path.startsWith("/swagger-ui") ||
+                path.startsWith("/webjars") ||
+                path.startsWith("/swagger-resources")) {
             filterChain.doFilter(request, response);
             return;
         }

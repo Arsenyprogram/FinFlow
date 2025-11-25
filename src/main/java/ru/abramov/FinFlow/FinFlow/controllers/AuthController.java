@@ -1,6 +1,9 @@
 package ru.abramov.FinFlow.FinFlow.controllers;
 
 import com.auth0.jwt.exceptions.JWTVerificationException;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.modelmapper.ModelMapper;
 import org.springframework.http.HttpStatus;
@@ -22,7 +25,10 @@ import ru.abramov.FinFlow.FinFlow.util.PersonValidator;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.*;
-
+@Tag(
+        name = "Auth",
+        description = "Эндпоинты для регистрации, логина, обновления токена и выхода"
+)
 @RestController
 @RequestMapping("/auth")
 public class AuthController {
@@ -44,6 +50,14 @@ public class AuthController {
     }
 
 
+    @Operation(
+            summary = "Регистрация пользователя",
+            description = "Создает нового пользователя и возвращает JWT access и refresh токены",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Регистрация успешна, токены выданы"),
+                    @ApiResponse(responseCode = "400", description = "Ошибка валидации или пользователь уже существует")
+            }
+    )
     @PostMapping("/registration")
     public ResponseEntity<?> registration(@RequestBody @Valid PersonRegistrationDto personRegistrationDto, BindingResult bindingResult) {
         if(bindingResult.hasErrors()) {
@@ -68,6 +82,15 @@ public class AuthController {
         }
     }
 
+    @Operation(
+            summary = "Логин пользователя",
+            description = "Проверяет логин и пароль, возвращает JWT access и refresh токены",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Логин успешен, токены выданы"),
+                    @ApiResponse(responseCode = "400", description = "Неправильный логин или пароль"),
+                    @ApiResponse(responseCode = "401", description = "Аккаунт удалён или срок восстановления истёк")
+            }
+    )
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody @Valid PersonLoginDTO personLoginDTO, BindingResult bindingResult) {
         if(bindingResult.hasErrors()) {
@@ -103,6 +126,14 @@ public class AuthController {
         }
     }
 
+    @Operation(
+            summary = "Обновить access токен",
+            description = "Принимает refresh токен и возвращает новый access токен",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Новый access токен выдан"),
+                    @ApiResponse(responseCode = "401", description = "Refresh токен недействителен или истёк")
+            }
+    )
     @PostMapping("/refresh")
     public ResponseEntity<?> refresh(@RequestBody RefreshTokenDTO refreshTokenDTO) {
         try {
@@ -118,6 +149,13 @@ public class AuthController {
         }
     }
 
+    @Operation(
+            summary = "Выход пользователя",
+            description = "Логаут текущего пользователя (очистка сессии не требуется для JWT)",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Выход успешен")
+            }
+    )
     @PostMapping("/logout")
     public ResponseEntity<?> logout() {
         return ResponseEntity.ok(Map.of("message", "Successfully logged out"));

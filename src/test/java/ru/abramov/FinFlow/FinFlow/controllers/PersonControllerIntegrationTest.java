@@ -9,6 +9,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.transaction.annotation.Transactional;
 import ru.abramov.FinFlow.FinFlow.entity.Person;
 import ru.abramov.FinFlow.FinFlow.repository.PersonRepository;
 import ru.abramov.FinFlow.FinFlow.repository.TransactionRepository;
@@ -54,6 +55,7 @@ class PersonControllerIntegrationTest {
 
     @Test
     @WithMockUser(username = "Test")
+    @Transactional
     void getCurrentPerson_ShouldReturnInfoAboutPerson() throws Exception {
         mockMvc.perform(get("/users/me")
                         .accept(String.valueOf(MediaType.APPLICATION_JSON)))
@@ -66,6 +68,7 @@ class PersonControllerIntegrationTest {
 
     @Test
     @WithMockUser(username = "Test")
+    @Transactional
     void updatePerson_ShouldUpdateFields() throws Exception {
         String json = """
             {
@@ -96,6 +99,7 @@ class PersonControllerIntegrationTest {
 
     @Test
     @WithMockUser(username = "Test")
+    @Transactional
     void deletePerson_WithCorrectPassword_ShouldReturnOk() throws Exception {
         String json = """
                 {
@@ -116,6 +120,8 @@ class PersonControllerIntegrationTest {
 
     @Test
     @WithMockUser(username = "Test")
+    @Transactional
+
     void deletePerson_WithWrongPassword_ShouldReturnBadRequest() throws Exception {
         String json = """
                 {

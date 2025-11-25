@@ -1,6 +1,8 @@
 package ru.abramov.FinFlow.FinFlow.service;
 
 import org.modelmapper.ModelMapper;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.abramov.FinFlow.FinFlow.dto.Person.PersonUpdateDTO;
@@ -22,8 +24,7 @@ public class PersonService {
     public PersonService(PersonRepository personRepository) {
         this.personRepository = personRepository;
     }
-
-
+    
     public Optional<Person> findByName(String name) {
         return personRepository.findByName(name);
     }
@@ -41,11 +42,5 @@ public class PersonService {
         person.setRestoreDeadline(Timestamp.from(Instant.now().plusSeconds(2592000)));
         personRepository.save(person);
     }
-
-
-
-
-
-
 
 }
